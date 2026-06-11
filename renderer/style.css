@@ -42,7 +42,7 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
 html, body {
   width: 380px;
-  height: 580px;
+  height: 640px;
   overflow: hidden;
   background: transparent;
   font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
