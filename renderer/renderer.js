@@ -404,8 +404,8 @@ function update(d) {
   chart24h.update('none');
 
   // Footer
-  document.getElementById('costSession').textContent = fmtCost(d.session5h.cost);
-  document.getElementById('costWeek').textContent    = fmtCost(d.weeklyAll.cost);
+  document.getElementById('costSession').textContent = fmtCost(d.session5h.cost) + (lim.session5h ? ` / ${fmtCost(lim.session5h)}` : '');
+  document.getElementById('costWeek').textContent    = fmtCost(d.weeklyAll.cost) + (lim.weeklyAll ? ` / ${fmtCost(lim.weeklyAll)}` : '');
   document.getElementById('updatedAt').textContent   = 'Updated 0s ago';
 }
 
