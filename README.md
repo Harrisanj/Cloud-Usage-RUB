@@ -1,5 +1,7 @@
 # Claude Usage Overlay
 
+[🇷🇺 Русский](#claude-usage-overlay-русский)
+
 ![Claude Usage Widget](screenshot.png)
 
 Always-on-top Electron widget for monitoring Claude Code token usage on the **Max 5×** plan.
@@ -9,9 +11,14 @@ Always-on-top Electron widget for monitoring Claude Code token usage on the **Ma
 - Real-time 5-hour session window with per-model breakdown
 - Weekly totals (all models + Sonnet-only)
 - Last 7 days stacked bar chart (Opus / Sonnet / Haiku)
-- Last 60-minute token sparkline
-- USD cost estimates
+- Last 24-hour token usage bar chart
+- USD and RUB cost estimates
+- **Project breakdowns**: Click on the 5-hour session, weekly summary, or any day in the 7-day chart to see usage per project.
+- **Calibrate 5-hour %**: Match your widget progress bar accurately to the official claude.ai web UI.
+- **Dynamic colors**: Progress bars automatically adapt to the dominant model used (Opus/Sonnet/Haiku).
+- **Tariffs switcher**: Quick dropdown to switch between Max 5x, Max 20x, and Pro limits.
 - Transparent frameless window, always on top, skip taskbar
+- Ghost mode (Ctrl+Alt+U): make it semi-transparent and click-through
 - System tray icon
 - Global hotkey **Ctrl+Shift+U** (show/hide)
 - Window position saved across restarts
@@ -25,28 +32,14 @@ npm start
 
 ## Logs location
 
-Parser scans `%USERPROFILE%\.claude\projects\**\*.jsonl` recursively.  
+Parser scans `%USERPROFILE%\.claude\projects\**\*.jsonl` recursively (and WSL `\\wsl$\Ubuntu\home\...`).  
 If the directory is empty — Claude Code hasn't been used yet, or stores logs elsewhere.  
 Check: `claude config get` to see the configured data dir.
-
-## Tune limits (other plans)
-
-Edit `LIMITS` in `main.js`:
-
-```js
-// Max 5x (default)
-const LIMITS = { session5h: 88_000_000, weeklyAll: 2_400_000_000, weeklySonnet: 1_800_000_000 };
-
-// Max 20x
-const LIMITS = { session5h: 352_000_000, weeklyAll: 9_600_000_000, weeklySonnet: 7_200_000_000 };
-
-// Pro (approx.)
-const LIMITS = { session5h: 8_800_000, weeklyAll: 240_000_000, weeklySonnet: 180_000_000 };
-```
 
 ## Keyboard shortcut
 
 **Ctrl+Shift+U** — global, works even when the window is hidden or unfocused.
+**Ctrl+Alt+U** — toggle Ghost Mode (click-through and semi-transparent).
 
 ## Troubleshooting
 
@@ -77,6 +70,10 @@ npm start             # launch the overlay
 - График за последние 7 дней (Opus / Sonnet / Haiku)
 - График затрат за последние 24 часа
 - Оценка стоимости в долларах (USD) и рублях (RUB)
+- **Разбивка по проектам**: Кликните на 5-часовую сессию, неделю или на любой столбец в 7-дневном графике, чтобы посмотреть траты по проектам.
+- **Калибровка 5h %**: Введите текущий процент с официального сайта claude.ai, чтобы виджет идеально с ним синхронизировался.
+- **Динамический цвет**: Полоска прогресса сессии автоматически принимает цвет той модели, на которую ушло больше всего денег (Opus/Sonnet/Haiku).
+- **Выбор тарифа**: Удобный встроенный переключатель между тарифами (Max 5x, Max 20x, Pro).
 - Режим "Ghost Mode": полупрозрачность и пропускание кликов мыши насквозь (не мешает работе)
 - Прозрачное окно без рамок, работающее поверх всех окон, скрыто из панели задач
 - Иконка в системном трее
@@ -100,4 +97,3 @@ npm start
 
 Парсер автоматически сканирует `%USERPROFILE%\.claude\projects\**\*.jsonl` (а также `\\wsl$\Ubuntu\home\...`).  
 Если виджет везде показывает нули, убедитесь, что вы уже пользовались Claude Code, или проверьте, где лежат логи командой `claude config get`.
-
