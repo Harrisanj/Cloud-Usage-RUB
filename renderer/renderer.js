@@ -328,8 +328,16 @@ function update(d) {
   const lbl24h = document.getElementById('lbl24h');
   if (lbl24h) lbl24h.textContent = `Last 24 Hours · ${d.currency === 'RUB' ? '₽' : '$'}/h`;
 
-  const hasFable5h = (d.session5h.fable || 0) > 0;
-  const hasFable7d = d.last7Days && d.last7Days.some(x => (x.fable || 0) > 0);
+  const fableSelect = document.getElementById('fableSelect');
+  if (fableSelect && d.limits && d.limits.includeFable5 !== undefined) {
+    const val = d.limits.includeFable5 ? 'true' : 'false';
+    if (fableSelect.value !== val) {
+      fableSelect.value = val;
+    }
+  }
+
+  const hasFable5h = d.limits.includeFable5 || (d.session5h.fable || 0) > 0;
+  const hasFable7d = d.limits.includeFable5 || (d.last7Days && d.last7Days.some(x => (x.fable || 0) > 0));
   
   const fableSpan = document.getElementById('lblFable5h');
   const fableLeg = document.getElementById('legFable');
@@ -617,6 +625,12 @@ document.getElementById('themeBtn').addEventListener('click', () => {
   isDark = !isDark;
   applyTheme(isDark);
 });
+const fableSelect = document.getElementById('fableSelect');
+if (fableSelect) {
+  fableSelect.addEventListener('change', (e) => {
+    if (window.api.setFableMode) window.api.setFableMode(e.target.value === 'true');
+  });
+}
 
 
 const ghostBtn = document.getElementById('ghostBtn');
