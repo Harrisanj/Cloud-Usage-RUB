@@ -468,6 +468,32 @@ document.getElementById('modalCancel').addEventListener('click', () => {
   modal.hidden = true;
 });
 
+// ── Calibrate Modal ────────────────────────────────────────────────────────
+
+const calibrateBtn = document.getElementById('calibrateBtn');
+const calibrateModal = document.getElementById('calibrateModal');
+const calibrateInput = document.getElementById('calibrateInput');
+
+if (calibrateBtn) {
+  calibrateBtn.addEventListener('click', () => {
+    calibrateModal.hidden = false;
+    calibrateInput.value = '';
+    calibrateInput.focus();
+  });
+}
+
+document.getElementById('calCancelBtn').addEventListener('click', () => {
+  calibrateModal.hidden = true;
+});
+
+document.getElementById('calSaveBtn').addEventListener('click', () => {
+  const pct = parseFloat(calibrateInput.value);
+  if (!isNaN(pct) && pct > 0) {
+    window.api.calibrate5h(pct);
+  }
+  calibrateModal.hidden = true;
+});
+
 document.getElementById('modalOk').addEventListener('click', () => {
   let ts;
   if (currentModalMode === 'weekly') {

@@ -79,20 +79,26 @@ function loadConfig() {
     const data = JSON.parse(fs.readFileSync(TARIFF_STATE_PATH, 'utf8'));
     return {
       tariff: ALL_TARIFFS[data.tariff] ? data.tariff : 'Max 5×',
-      currency: data.currency === 'RUB' ? 'RUB' : 'USD'
+      currency: data.currency === 'RUB' ? 'RUB' : 'USD',
+      customLimit5h: data.customLimit5h || null
     };
   } catch (_) {}
-  return { tariff: 'Max 5×', currency: 'USD' };
+  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null };
 }
 
-function saveConfig(tariff, currency) {
+function saveConfig(tariff, currency, customLimit5h = null) {
   try {
-    fs.writeFileSync(TARIFF_STATE_PATH, JSON.stringify({ tariff, currency }), 'utf8');
+    fs.writeFileSync(TARIFF_STATE_PATH, JSON.stringify({ tariff, currency, customLimit5h }), 'utf8');
   } catch (_) {}
 }
 
 function getLimits() {
-  return ALL_TARIFFS[loadConfig().tariff];
+  const cfg = loadConfig();
+  const limits = { ...ALL_TARIFFS[cfg.tariff] };
+  if (cfg.customLimit5h) {
+    limits.session5h = cfg.customLimit5h;
+  }
+  return limits;
 }
 
 let exchangeRateUSD = 100; // Fallback
@@ -504,7 +510,8 @@ ipcMain.on('mark-weekly-reset', (_e, tsArg) => {
 ipcMain.on('set-tariff', (_e, name) => {
   const cfg = loadConfig();
   if (ALL_TARIFFS[name]) cfg.tariff = name;
-  saveConfig(cfg.tariff, cfg.currency);
+  cfg.customLimit5h = null; // reset custom limit on tariff change
+  saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
   }
@@ -513,9 +520,23 @@ ipcMain.on('set-tariff', (_e, name) => {
 ipcMain.on('set-currency', (_e, cur) => {
   const cfg = loadConfig();
   if (cur === 'RUB' || cur === 'USD') cfg.currency = cur;
-  saveConfig(cfg.tariff, cfg.currency);
+  saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
+  }
+});
+
+ipcMain.on('calibrate-5h', async (_e, pct) => {
+  const entries = await loadAllEntries();
+  const session = getSession5h(entries);
+  if (session.cost > 0) {
+    const newLimit = session.cost / (pct / 100);
+    const cfg = loadConfig();
+    cfg.customLimit5h = newLimit;
+    saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
+    }
   }
 });
 

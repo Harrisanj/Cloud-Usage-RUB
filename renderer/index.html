@@ -21,6 +21,7 @@
       </div>
       <div class="header-right">
         <select class="plan-badge plan-select" id="tariffSelect" title="Выберите тариф"></select>
+        <button class="icon-btn" id="calibrateBtn" title="Скорректировать %">%</button>
         <select class="plan-badge plan-select" id="currencySelect" title="Выберите валюту"></select>
         <button class="icon-btn" id="ghostBtn" title="Ghost Mode (Ctrl+Alt+U)">👻</button>
         <button class="icon-btn" id="themeBtn" title="Toggle theme">◑</button>
@@ -148,6 +149,18 @@
       <div class="modal-btns">
         <button id="modalCancel" class="modal-btn modal-btn-cancel">Отмена</button>
         <button id="modalOk"     class="modal-btn modal-btn-ok">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calibrate picker modal -->
+  <div id="calibrateModal" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-title">Текущий % на claude.ai:</div>
+      <input type="number" id="calibrateInput" class="dt-input" placeholder="Например: 5" min="0" max="100" />
+      <div class="modal-btns">
+        <button id="calCancelBtn" class="modal-btn modal-btn-cancel">Отмена</button>
+        <button id="calSaveBtn" class="modal-btn modal-btn-ok">Сохранить</button>
       </div>
     </div>
   </div>
