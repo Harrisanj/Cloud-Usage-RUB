@@ -119,20 +119,23 @@ function fmtWeekEnd(weekStartTs) {
 
 // ── Progress bar ───────────────────────────────────────────────────────
 
-function setBar(id, pct, color = null) {
+function setBar(id, pct, color = null, disableWarn = false) {
   const bar = document.getElementById(id);
   if (!bar) return;
   bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
   bar.classList.remove('warn', 'crit');
-  if (pct >= 80) {
-    bar.classList.add('crit');
-    bar.style.backgroundColor = '';
-  } else if (pct >= 50) {
-    bar.classList.add('warn');
-    bar.style.backgroundColor = '';
-  } else {
-    bar.style.backgroundColor = color || '';
+  if (!disableWarn) {
+    if (pct >= 80) {
+      bar.classList.add('crit');
+      bar.style.backgroundColor = '';
+      return;
+    } else if (pct >= 50) {
+      bar.classList.add('warn');
+      bar.style.backgroundColor = '';
+      return;
+    }
   }
+  bar.style.backgroundColor = color || '';
 }
 
 // ── Chart.js init ──────────────────────────────────────────────────────
@@ -384,13 +387,7 @@ function update(d) {
     ? d.weeklyAll.serverPct
     : (lim.weeklyAll > 0 ? (d.weeklyAll.cost / lim.weeklyAll) * 100 : 0);
     
-  let domW = COLORS.sonnet;
-  if (d.weeklyAll.opus >= d.weeklyAll.sonnet && d.weeklyAll.opus >= d.weeklyAll.haiku && d.weeklyAll.opus >= (d.weeklyAll.fable || 0)) domW = COLORS.opus;
-  else if (d.weeklyAll.sonnet >= d.weeklyAll.opus && d.weeklyAll.sonnet >= d.weeklyAll.haiku && d.weeklyAll.sonnet >= (d.weeklyAll.fable || 0)) domW = COLORS.sonnet;
-  else if (d.weeklyAll.haiku >= d.weeklyAll.opus && d.weeklyAll.haiku >= d.weeklyAll.sonnet && d.weeklyAll.haiku >= (d.weeklyAll.fable || 0)) domW = COLORS.haiku;
-  else if ((d.weeklyAll.fable || 0) >= d.weeklyAll.opus && (d.weeklyAll.fable || 0) >= d.weeklyAll.sonnet && (d.weeklyAll.fable || 0) >= d.weeklyAll.haiku) domW = COLORS.fable;
-
-  setBar('barWeekly', pctW, domW);
+  setBar('barWeekly', pctW, 'var(--ok)', true); // always green
   document.getElementById('pctWeekly').textContent = pctW.toFixed(1) + '%';
   lastWeeklyPct = pctW;
 
