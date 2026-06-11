@@ -42,7 +42,7 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
 html, body {
   width: 380px;
-  height: 640px;
+  height: 100vh;
   overflow: hidden;
   background: transparent;
   font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
@@ -52,7 +52,7 @@ html, body {
 
 #app {
   width: 380px;
-  height: 640px;
+  height: 100vh;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;

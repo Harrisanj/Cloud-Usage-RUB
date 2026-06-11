@@ -140,7 +140,7 @@ const PRICING = {
 const WIN_STATE_PATH    = path.join(app.getPath('userData'), 'window-state.json');
 const RESET_STATE_PATH  = path.join(app.getPath('userData'), 'weekly-reset.json');
 const WINDOW_W = 380;
-const WINDOW_H = 640;
+const WINDOW_H = 600;
 
 // ── Weekly reset state ─────────────────────────────────────────────────────
 // Stores { ts: number } — timestamp when the user last confirmed a reset happened.
