@@ -368,7 +368,7 @@ function createTray() {
 
   const menu = Menu.buildFromTemplate([
     { label: 'Show / Hide', click: () => toggleWindow() },
-    { label: 'Ghost Mode (Click-through)', click: () => toggleGhostMode() },
+    { label: 'Ghost Mode (Ctrl+Alt+U)', click: () => toggleGhostMode() },
     { label: 'Reload data', click: () => mainWindow && mainWindow.reload() },
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() },
@@ -383,10 +383,8 @@ function toggleGhostMode() {
   if (!mainWindow) return;
   isGhostMode = !isGhostMode;
   if (isGhostMode) {
-    mainWindow.setOpacity(0.3);
     mainWindow.setIgnoreMouseEvents(true, { forward: true });
   } else {
-    mainWindow.setOpacity(1.0);
     mainWindow.setIgnoreMouseEvents(false);
   }
   mainWindow.webContents.send('ghost-mode-changed', isGhostMode);
@@ -507,7 +505,7 @@ if (!gotLock) {
     createWindow();
     createTray();
     globalShortcut.register('CommandOrControl+Shift+U', toggleWindow);
-    globalShortcut.register('Alt+Shift+U', toggleGhostMode);
+    globalShortcut.register('CommandOrControl+Alt+U', toggleGhostMode);
     mainWindow.webContents.on('did-finish-load', () => startUpdates());
   });
 }

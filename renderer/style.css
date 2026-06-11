@@ -409,3 +409,6 @@ html, body {
 .cost-val     { color: var(--text-bright); font-weight: 600; }
 .cost-sep     { color: var(--border); }
 .updated-at   { font-size: 9px; color: var(--text-dim); }
+
+body.ghost-mode #app { opacity: 0.25; pointer-events: none; }
+
