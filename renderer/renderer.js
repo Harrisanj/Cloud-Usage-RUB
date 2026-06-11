@@ -485,12 +485,26 @@ document.getElementById('modalCancel').addEventListener('click', () => {
 
 // ── Calibrate Modal ────────────────────────────────────────────────────────
 
-const calibrateBtn = document.getElementById('calibrateBtn');
 const calibrateModal = document.getElementById('calibrateModal');
 const calibrateInput = document.getElementById('calibrateInput');
+let currentCalibrateMode = '5h';
 
-if (calibrateBtn) {
-  calibrateBtn.addEventListener('click', () => {
+const pct5hBtn = document.getElementById('pct5h');
+if (pct5hBtn) {
+  pct5hBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentCalibrateMode = '5h';
+    calibrateModal.hidden = false;
+    calibrateInput.value = '';
+    calibrateInput.focus();
+  });
+}
+
+const pctWeeklyBtn = document.getElementById('pctWeekly');
+if (pctWeeklyBtn) {
+  pctWeeklyBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentCalibrateMode = 'weekly';
     calibrateModal.hidden = false;
     calibrateInput.value = '';
     calibrateInput.focus();
@@ -504,7 +518,7 @@ document.getElementById('calCancelBtn').addEventListener('click', () => {
 document.getElementById('calSaveBtn').addEventListener('click', () => {
   const pct = parseFloat(calibrateInput.value);
   if (!isNaN(pct) && pct > 0) {
-    window.api.calibrate5h(pct);
+    window.api.calibrate(currentCalibrateMode, pct);
   }
   calibrateModal.hidden = true;
 });

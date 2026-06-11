@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('api', {
   onGhostModeChanged(callback) {
     ipcRenderer.on('ghost-mode-changed', (_event, isGhost) => callback(isGhost));
   },
-  calibrate5h(pct) {
-    ipcRenderer.send('calibrate-5h', pct);
+  calibrate(mode, pct) {
+    ipcRenderer.send('calibrate', mode, pct);
   },
 });

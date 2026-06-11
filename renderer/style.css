@@ -223,6 +223,13 @@ html, body {
   letter-spacing: -0.02em;
   line-height: 1;
 }
+.clickable-pct {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.clickable-pct:hover {
+  color: var(--accent-sonnet);
+}
 
 .reset-big {
   font-size: 12px; font-weight: 600;
