@@ -563,20 +563,12 @@ ipcMain.on('calibrate', async (_e, mode, pct) => {
     if (mode === '5h') {
       const session = getSession5h(entries);
       if (session.cost > 0) {
-        const newLim = session.cost / (pct / 100);
-        cfg.calibHist5h = (cfg.calibHist5h || []).filter(x => typeof x === 'object');
-        cfg.calibHist5h.push({ limit: newLim, pct: pct, ts: Date.now() });
-        if (cfg.calibHist5h.length > 5) cfg.calibHist5h.shift();
-        cfg.customLimit5h = cfg.calibHist5h.reduce((a,b)=>a+b.limit, 0) / cfg.calibHist5h.length;
+        cfg.customLimit5h = session.cost / (pct / 100);
       }
     } else if (mode === 'weekly') {
       const weekly = getWeekly(entries);
       if (weekly.cost > 0) {
-        const newLim = weekly.cost / (pct / 100);
-        cfg.calibHistWeekly = (cfg.calibHistWeekly || []).filter(x => typeof x === 'object');
-        cfg.calibHistWeekly.push({ limit: newLim, pct: pct, ts: Date.now() });
-        if (cfg.calibHistWeekly.length > 5) cfg.calibHistWeekly.shift();
-        cfg.customLimitWeekly = cfg.calibHistWeekly.reduce((a,b)=>a+b.limit, 0) / cfg.calibHistWeekly.length;
+        cfg.customLimitWeekly = weekly.cost / (pct / 100);
       }
     }
   }
