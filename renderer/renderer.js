@@ -115,13 +115,20 @@ function fmtWeekEnd(weekStartTs) {
 
 // ── Progress bar ───────────────────────────────────────────────────────
 
-function setBar(id, pct) {
+function setBar(id, pct, color = null) {
   const bar = document.getElementById(id);
   if (!bar) return;
   bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
   bar.classList.remove('warn', 'crit');
-  if (pct >= 80) bar.classList.add('crit');
-  else if (pct >= 50) bar.classList.add('warn');
+  if (pct >= 80) {
+    bar.classList.add('crit');
+    bar.style.backgroundColor = '';
+  } else if (pct >= 50) {
+    bar.classList.add('warn');
+    bar.style.backgroundColor = '';
+  } else {
+    bar.style.backgroundColor = color || '';
+  }
 }
 
 // ── Chart.js init ──────────────────────────────────────────────────────
@@ -316,7 +323,13 @@ function update(d) {
   const pct5h = d.session5h.serverPct !== null
     ? d.session5h.serverPct
     : (lim.session5h > 0 ? (d.session5h.cost / lim.session5h) * 100 : 0);
-  setBar('bar5h', pct5h);
+  
+  let dom5h = '';
+  if (d.session5h.opus >= d.session5h.sonnet && d.session5h.opus >= d.session5h.haiku) dom5h = COLORS.opus;
+  else if (d.session5h.sonnet >= d.session5h.opus && d.session5h.sonnet >= d.session5h.haiku) dom5h = COLORS.sonnet;
+  else if (d.session5h.haiku >= d.session5h.opus && d.session5h.haiku >= d.session5h.sonnet) dom5h = COLORS.haiku;
+  
+  setBar('bar5h', pct5h, dom5h);
   document.getElementById('pct5h').textContent = pct5h.toFixed(1) + '%';
   lastSessionPct = pct5h;
 
@@ -346,6 +359,8 @@ function update(d) {
   const pctW = d.weeklyAll.serverPct !== null
     ? d.weeklyAll.serverPct
     : (lim.weeklyAll > 0 ? (d.weeklyAll.cost / lim.weeklyAll) * 100 : 0);
+  setBar('barWeekly', pctW, COLORS.opus); // Default or maybe no special color needed here? Let's just use default or ''
+  // Actually, let's leave barWeekly to its default by omitting the third arg, or pass null.
   setBar('barWeekly', pctW);
   document.getElementById('pctWeekly').textContent = pctW.toFixed(1) + '%';
   lastWeeklyPct = pctW;
@@ -372,7 +387,7 @@ function update(d) {
   const pctS = d.weeklySonnet.serverPct !== null
     ? d.weeklySonnet.serverPct
     : (lim.weeklySonnet > 0 ? (d.weeklySonnet.cost / lim.weeklySonnet) * 100 : 0);
-  setBar('barSonnet', pctS);
+  setBar('barSonnet', pctS, COLORS.sonnet);
   document.getElementById('pctSonnet').textContent = pctS.toFixed(1) + '%';
 
   // 7-day chart
