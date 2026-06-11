@@ -56,8 +56,8 @@ let globalCurrency = 'USD';
 let globalRate = 100;
 let lastLimits = null;
 
-let chart7 = null;
-let chart24h = null;
+chart7 = null;
+chart24h = null;
 
 function fmtCost(usd) {
   let val = usd;
@@ -273,7 +273,7 @@ let last7DaysData = [];
 let lastSessionPct = 0;
 let lastWeeklyPct = 0;
 let currentTariffName = null;
-let currentCurrency = null;
+
 
 // ── Project name decoding ──────────────────────────────────────────────
 // Claude Code stores logs in ~/.claude/projects/<encoded-cwd>/, where the
