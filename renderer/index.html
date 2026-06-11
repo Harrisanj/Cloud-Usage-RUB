@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Usage Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <span class="pulse-dot"></span>
+        <span class="header-title">CLAUDE USAGE</span>
+      </div>
+      <div class="header-right">
+        <select class="plan-badge plan-select" id="tariffSelect" title="Выберите тариф"></select>
+        <select class="plan-badge plan-select" id="currencySelect" title="Выберите валюту"></select>
+        <button class="icon-btn" id="themeBtn" title="Toggle theme">◑</button>
+        <button class="icon-btn close-btn" id="closeBtn" title="Hide">×</button>
+      </div>
+    </div>
+
+    <!-- 5h Session Window -->
+    <div class="section section-clickable" id="section5h" title="Кликни чтобы увидеть разбивку по проектам">
+      <div class="section-label"><span>5h Session</span><span class="caret-hint">▾</span></div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="bar5h"></div>
+      </div>
+      <div class="progress-wrap progress-wrap-time">
+        <div class="progress-bar" id="bar5hTime"></div>
+      </div>
+      <div class="bar-main">
+        <span class="pct-main" id="pct5h">—%</span>
+        <span class="reset-big" id="resetSession">—</span>
+      </div>
+      <div class="model-row" id="modelRow5h">
+        <span class="m-opus">Opus —%</span>
+        <span class="m-sonnet">Sonnet —%</span>
+        <span class="m-haiku">Haiku —%</span>
+      </div>
+    </div>
+
+    <!-- Weekly All Models -->
+    <div class="section">
+      <div class="section-label">
+        <span>Weekly · All</span>
+        <button class="mark-reset-btn" id="markResetBtn" title="Установить время сброса">↺</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="barWeekly"></div>
+      </div>
+      <div class="progress-wrap progress-wrap-time">
+        <div class="progress-bar" id="barWeeklyTime"></div>
+      </div>
+      <div class="bar-main">
+        <span class="pct-main" id="pctWeekly">—%</span>
+        <span class="reset-big" id="resetWeekly">—</span>
+      </div>
+      <div class="week-start-label" id="weekStartLabel">—</div>
+    </div>
+
+    <!-- Weekly Sonnet Only -->
+    <div class="section">
+      <div class="section-label">
+        <span>Weekly · Sonnet</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="barSonnet"></div>
+      </div>
+      <div class="bar-footer">
+        <span></span>
+        <span class="pct-main" id="pctSonnet">—%</span>
+      </div>
+    </div>
+
+    <!-- Last 7 Days Chart -->
+    <div class="section">
+      <div class="section-label"><span id="lbl7Days">Last 7 Days · $/day</span></div>
+      <div class="chart-wrap">
+        <canvas id="chart7days"></canvas>
+      </div>
+      <div class="legend-row">
+        <span class="leg-item m-opus">■ Opus</span>
+        <span class="leg-item m-sonnet">■ Sonnet</span>
+        <span class="leg-item m-haiku">■ Haiku</span>
+      </div>
+    </div>
+
+    <!-- Last 24 Hours Chart -->
+    <div class="section">
+      <div class="section-label"><span id="lbl24h">Last 24 Hours · $/h</span></div>
+      <div class="chart-wrap chart-wrap-sm">
+        <canvas id="chart24h"></canvas>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-costs">
+        <span class="cost-label">Session:</span>
+        <span id="costSession" class="cost-val">$—</span>
+        <span class="cost-sep">·</span>
+        <span class="cost-label">Week:</span>
+        <span id="costWeek" class="cost-val">$—</span>
+      </div>
+      <div id="updatedAt" class="updated-at">—</div>
+    </div>
+
+  </div>
+
+  <!-- 5h projects popover -->
+  <div id="sessionPopover" class="popover" hidden>
+    <div class="popover-title">5h · По проектам</div>
+    <div class="popover-list" id="sessionPopoverList"></div>
+  </div>
+
+  <!-- Reset picker modal -->
+  <div id="resetModal" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-title">Когда произошёл последний сброс?</div>
+      <input type="datetime-local" id="resetInput" class="dt-input" />
+      <div class="modal-btns">
+        <button id="modalCancel" class="modal-btn modal-btn-cancel">Отмена</button>
+        <button id="modalOk"     class="modal-btn modal-btn-ok">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
