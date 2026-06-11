@@ -248,12 +248,19 @@ function getWeekly(entries) {
   const since = getWeeklyStart();
   const sub = entries.filter(e => e.ts >= since);
 
-  const result = { cost: 0, sonnetCost: 0, resetInMs: 0 };
+  const result = { cost: 0, sonnetCost: 0, resetInMs: 0, projects: [] };
+  const projectCosts = new Map();
   for (const e of sub) {
     const c = entryCost(e);
     result.cost += c;
     if (e.model === 'sonnet') result.sonnetCost += c;
+    const proj = e.project || 'unknown';
+    projectCosts.set(proj, (projectCosts.get(proj) || 0) + c);
   }
+
+  result.projects = [...projectCosts.entries()]
+    .map(([name, cost]) => ({ name, cost }))
+    .sort((a, b) => b.cost - a.cost);
 
   const nextReset = since + 7 * 24 * 60 * 60 * 1000;
   result.resetInMs = nextReset - Date.now();
@@ -288,6 +295,7 @@ function getLast7Days(entries) {
       start: d.getTime(),
       end: dayEnd.getTime(),
       opus: 0, sonnet: 0, haiku: 0,
+      projectCosts: new Map(),
     });
   }
 
@@ -298,12 +306,19 @@ function getLast7Days(entries) {
         if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku') {
           bucket[e.model] += c;
         }
+        const proj = e.project || 'unknown';
+        bucket.projectCosts.set(proj, (bucket.projectCosts.get(proj) || 0) + c);
         break;
       }
     }
   }
 
-  return days.map(({ day, opus, sonnet, haiku }) => ({ day, opus, sonnet, haiku }));
+  return days.map(d => {
+    const projects = [...d.projectCosts.entries()]
+      .map(([name, cost]) => ({ name, cost }))
+      .sort((a, b) => b.cost - a.cost);
+    return { day: d.day, opus: d.opus, sonnet: d.sonnet, haiku: d.haiku, projects };
+  });
 }
 
 // ── Window state ───────────────────────────────────────────────────────────

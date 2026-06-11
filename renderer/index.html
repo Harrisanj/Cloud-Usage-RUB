@@ -53,10 +53,11 @@
     </div>
 
     <!-- Weekly All Models -->
-    <div class="section">
+    <div class="section section-clickable" id="sectionWeekly" title="Кликни чтобы увидеть разбивку по проектам">
       <div class="section-label">
         <span>Weekly · All</span>
         <button class="mark-reset-btn" id="markResetBtn" title="Установить время сброса">↺</button>
+        <span class="caret-hint">▾</span>
       </div>
       <div class="progress-wrap">
         <div class="progress-bar" id="barWeekly"></div>
@@ -126,11 +127,24 @@
     <div class="popover-list" id="sessionPopoverList"></div>
   </div>
 
+  <!-- Weekly projects popover -->
+  <div id="weeklyPopover" class="popover" hidden>
+    <div class="popover-title">Неделя · По проектам</div>
+    <div class="popover-list" id="weeklyPopoverList"></div>
+  </div>
+
+  <!-- Chart popover -->
+  <div id="chartPopover" class="popover" hidden>
+    <div class="popover-title" id="chartPopoverTitle">День · По проектам</div>
+    <div class="popover-list" id="chartPopoverList"></div>
+  </div>
+
   <!-- Reset picker modal -->
   <div id="resetModal" class="modal-overlay" hidden>
     <div class="modal">
       <div class="modal-title" id="resetModalTitle">Когда произошёл последний сброс?</div>
       <input type="datetime-local" id="resetInput" class="dt-input" />
+      <input type="number" id="resetMinutesInput" class="dt-input" placeholder="Осталось минут..." hidden />
       <div class="modal-btns">
         <button id="modalCancel" class="modal-btn modal-btn-cancel">Отмена</button>
         <button id="modalOk"     class="modal-btn modal-btn-ok">Сохранить</button>

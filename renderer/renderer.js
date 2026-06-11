@@ -178,6 +178,12 @@ chart7 = new Chart(ctx7, {
         },
       },
     },
+    onClick: (e, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        showChartPopover(index);
+      }
+    },
     scales: {
       x: { ...scaleBase(), ticks: { ...scaleBase().ticks, maxRotation: 0 } },
       y: {
@@ -251,7 +257,10 @@ chart24h = new Chart(ctx24, {
 // ── State ──────────────────────────────────────────────────────────────
 let lastUpdatedAt = null;
 let lastSessionProjects = [];
+let lastWeeklyProjects = [];
+let last7DaysData = [];
 let lastSessionPct = 0;
+let lastWeeklyPct = 0;
 let currentTariffName = null;
 let currentCurrency = null;
 
@@ -339,6 +348,9 @@ function update(d) {
     : (lim.weeklyAll > 0 ? (d.weeklyAll.cost / lim.weeklyAll) * 100 : 0);
   setBar('barWeekly', pctW);
   document.getElementById('pctWeekly').textContent = pctW.toFixed(1) + '%';
+  lastWeeklyPct = pctW;
+  lastWeeklyProjects = d.weeklyAll.projects || [];
+  if (!document.getElementById('weeklyPopover').hidden) renderWeeklyPopover();
 
   const resetMsW = d.weeklyAll.serverResetAt !== null
     ? d.weeklyAll.serverResetAt - Date.now()
@@ -364,6 +376,7 @@ function update(d) {
   document.getElementById('pctSonnet').textContent = pctS.toFixed(1) + '%';
 
   // 7-day chart
+  last7DaysData = d.last7Days || [];
   chart7.data.labels = d.last7Days.map(x => x.day);
   chart7.data.datasets[0].data = d.last7Days.map(x => x.opus);
   chart7.data.datasets[1].data = d.last7Days.map(x => x.sonnet);
@@ -425,11 +438,15 @@ let currentModalMode = 'weekly';
 
 const modal      = document.getElementById('resetModal');
 const resetInput = document.getElementById('resetInput');
+const resetMinutesInput = document.getElementById('resetMinutesInput');
 const modalTitle = document.getElementById('resetModalTitle');
 
-document.getElementById('markResetBtn').addEventListener('click', () => {
+document.getElementById('markResetBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
   currentModalMode = 'weekly';
   if (modalTitle) modalTitle.textContent = 'Когда начался отсчет недели?';
+  resetInput.hidden = false;
+  resetMinutesInput.hidden = true;
   resetInput.value = toDatetimeLocal(lastResetDate());
   modal.hidden = false;
 });
@@ -439,10 +456,10 @@ if (markSessionBtn) {
   markSessionBtn.addEventListener('click', (e) => {
     e.stopPropagation(); // prevent popover
     currentModalMode = 'session';
-    if (modalTitle) modalTitle.textContent = 'Когда закончится 5-часовая сессия?';
-    const defaultTime = new Date();
-    defaultTime.setHours(defaultTime.getHours() + 5);
-    resetInput.value = toDatetimeLocal(defaultTime);
+    if (modalTitle) modalTitle.textContent = 'Через сколько минут сброс сессии?';
+    resetInput.hidden = true;
+    resetMinutesInput.hidden = false;
+    resetMinutesInput.value = '';
     modal.hidden = false;
   });
 }
@@ -452,8 +469,17 @@ document.getElementById('modalCancel').addEventListener('click', () => {
 });
 
 document.getElementById('modalOk').addEventListener('click', () => {
-  const ts = new Date(resetInput.value).getTime();
-  if (!isNaN(ts)) {
+  let ts;
+  if (currentModalMode === 'weekly') {
+    ts = new Date(resetInput.value).getTime();
+  } else {
+    const mins = parseInt(resetMinutesInput.value, 10);
+    if (!isNaN(mins)) {
+      ts = Date.now() + mins * 60000;
+    }
+  }
+
+  if (!isNaN(ts) && ts !== undefined) {
     if (currentModalMode === 'weekly') {
       window.api.markWeeklyReset(ts);
     } else {
@@ -509,11 +535,61 @@ function renderSessionPopover() {
   }).join('');
 }
 
+function renderWeeklyPopover() {
+  const list = document.getElementById('weeklyPopoverList');
+  const total = lastWeeklyProjects.reduce((s, p) => s + p.cost, 0);
+  if (total === 0 || lastWeeklyProjects.length === 0) {
+    list.innerHTML = '<div class="popover-empty">Нет данных за текущую неделю</div>';
+    return;
+  }
+  list.innerHTML = lastWeeklyProjects.map(p => {
+    const pct = (p.cost / total * lastWeeklyPct).toFixed(1);
+    const display = projectDisplayName(p.name);
+    return `<div class="popover-row" title="${escapeHtml(p.name)}">` +
+      `<span class="popover-name">${escapeHtml(display)}</span>` +
+      `<span class="popover-pct">${pct}%</span>` +
+    `</div>`;
+  }).join('');
+}
+
+function showChartPopover(dayIndex) {
+  const dayData = last7DaysData[dayIndex];
+  if (!dayData) return;
+  const list = document.getElementById('chartPopoverList');
+  const title = document.getElementById('chartPopoverTitle');
+  if (title) title.textContent = `${dayData.day} · По проектам`;
+  
+  const total = (dayData.projects || []).reduce((s, p) => s + p.cost, 0);
+  if (total === 0 || !dayData.projects || dayData.projects.length === 0) {
+    list.innerHTML = '<div class="popover-empty">Нет данных за этот день</div>';
+  } else {
+    list.innerHTML = dayData.projects.map(p => {
+      const display = projectDisplayName(p.name);
+      return `<div class="popover-row" title="${escapeHtml(p.name)}">` +
+        `<span class="popover-name">${escapeHtml(display)}</span>` +
+        `<span class="popover-pct">${fmtCost(p.cost)}</span>` +
+      `</div>`;
+    }).join('');
+  }
+  
+  // Close others
+  document.getElementById('sessionPopover').hidden = true;
+  document.getElementById('weeklyPopover').hidden = true;
+  
+  const chartPop = document.getElementById('chartPopover');
+  chartPop.hidden = false;
+}
+
 const popover = document.getElementById('sessionPopover');
+const weeklyPopover = document.getElementById('weeklyPopover');
+const chartPopover = document.getElementById('chartPopover');
 const section5h = document.getElementById('section5h');
+const sectionWeekly = document.getElementById('sectionWeekly');
 
 section5h.addEventListener('click', (e) => {
   e.stopPropagation();
+  weeklyPopover.hidden = true;
+  chartPopover.hidden = true;
   if (popover.hidden) {
     renderSessionPopover();
     popover.hidden = false;
@@ -522,14 +598,32 @@ section5h.addEventListener('click', (e) => {
   }
 });
 
+if (sectionWeekly) {
+  sectionWeekly.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popover.hidden = true;
+    chartPopover.hidden = true;
+    if (weeklyPopover.hidden) {
+      renderWeeklyPopover();
+      weeklyPopover.hidden = false;
+    } else {
+      weeklyPopover.hidden = true;
+    }
+  });
+}
+
 document.addEventListener('click', (e) => {
-  if (popover.hidden) return;
-  if (popover.contains(e.target) || section5h.contains(e.target)) return;
-  popover.hidden = true;
+  if (!popover.hidden && !popover.contains(e.target) && !section5h.contains(e.target)) popover.hidden = true;
+  if (!weeklyPopover.hidden && !weeklyPopover.contains(e.target) && (!sectionWeekly || !sectionWeekly.contains(e.target))) weeklyPopover.hidden = true;
+  if (!chartPopover.hidden && !chartPopover.contains(e.target) && !document.getElementById('chart7days').contains(e.target)) chartPopover.hidden = true;
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !popover.hidden) popover.hidden = true;
+  if (e.key === 'Escape') {
+    popover.hidden = true;
+    weeklyPopover.hidden = true;
+    chartPopover.hidden = true;
+  }
 });
 
 window.api.onUsageUpdate(update);
