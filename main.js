@@ -81,15 +81,17 @@ function loadConfig() {
       tariff: ALL_TARIFFS[data.tariff] ? data.tariff : 'Max 5×',
       currency: data.currency === 'RUB' ? 'RUB' : 'USD',
       customLimit5h: data.customLimit5h || null,
-      customLimitWeekly: data.customLimitWeekly || null
+      customLimitWeekly: data.customLimitWeekly || null,
+      calibHist5h: data.calibHist5h || [],
+      calibHistWeekly: data.calibHistWeekly || []
     };
   } catch (_) {}
-  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null };
+  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null, calibHist5h: [], calibHistWeekly: [] };
 }
 
-function saveConfig(tariff, currency, customLimit5h = null, customLimitWeekly = null) {
+function saveConfig(cfg) {
   try {
-    fs.writeFileSync(TARIFF_STATE_PATH, JSON.stringify({ tariff, currency, customLimit5h, customLimitWeekly }), 'utf8');
+    fs.writeFileSync(TARIFF_STATE_PATH, JSON.stringify(cfg), 'utf8');
   } catch (_) {}
 }
 
@@ -516,7 +518,9 @@ ipcMain.on('set-tariff', (_e, name) => {
   if (ALL_TARIFFS[name]) cfg.tariff = name;
   cfg.customLimit5h = null; // reset custom limit on tariff change
   cfg.customLimitWeekly = null;
-  saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h, cfg.customLimitWeekly);
+  cfg.calibHist5h = [];
+  cfg.calibHistWeekly = [];
+  saveConfig(cfg);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
   }
@@ -525,7 +529,7 @@ ipcMain.on('set-tariff', (_e, name) => {
 ipcMain.on('set-currency', (_e, cur) => {
   const cfg = loadConfig();
   if (cur === 'RUB' || cur === 'USD') cfg.currency = cur;
-  saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h, cfg.customLimitWeekly);
+  saveConfig(cfg);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
   }
@@ -534,19 +538,36 @@ ipcMain.on('set-currency', (_e, cur) => {
 ipcMain.on('calibrate', async (_e, mode, pct) => {
   const entries = await loadAllEntries();
   const cfg = loadConfig();
-  if (mode === '5h') {
-    const session = getSession5h(entries);
-    if (session.cost > 0) {
-      cfg.customLimit5h = session.cost / (pct / 100);
-      saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h, cfg.customLimitWeekly);
+
+  if (pct === null) {
+    if (mode === '5h') {
+      cfg.customLimit5h = null;
+      cfg.calibHist5h = [];
+    } else if (mode === 'weekly') {
+      cfg.customLimitWeekly = null;
+      cfg.calibHistWeekly = [];
     }
-  } else if (mode === 'weekly') {
-    const weekly = getWeekly(entries);
-    if (weekly.cost > 0) {
-      cfg.customLimitWeekly = weekly.cost / (pct / 100);
-      saveConfig(cfg.tariff, cfg.currency, cfg.customLimit5h, cfg.customLimitWeekly);
+  } else {
+    if (mode === '5h') {
+      const session = getSession5h(entries);
+      if (session.cost > 0) {
+        const newLim = session.cost / (pct / 100);
+        cfg.calibHist5h.push(newLim);
+        if (cfg.calibHist5h.length > 5) cfg.calibHist5h.shift();
+        cfg.customLimit5h = cfg.calibHist5h.reduce((a,b)=>a+b, 0) / cfg.calibHist5h.length;
+      }
+    } else if (mode === 'weekly') {
+      const weekly = getWeekly(entries);
+      if (weekly.cost > 0) {
+        const newLim = weekly.cost / (pct / 100);
+        cfg.calibHistWeekly.push(newLim);
+        if (cfg.calibHistWeekly.length > 5) cfg.calibHistWeekly.shift();
+        cfg.customLimitWeekly = cfg.calibHistWeekly.reduce((a,b)=>a+b, 0) / cfg.calibHistWeekly.length;
+      }
     }
   }
+
+  saveConfig(cfg);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
   }

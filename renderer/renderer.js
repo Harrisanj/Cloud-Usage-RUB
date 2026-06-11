@@ -515,6 +515,11 @@ document.getElementById('calCancelBtn').addEventListener('click', () => {
   calibrateModal.hidden = true;
 });
 
+document.getElementById('calResetBtn').addEventListener('click', () => {
+  window.api.calibrate(currentCalibrateMode, null);
+  calibrateModal.hidden = true;
+});
+
 document.getElementById('calSaveBtn').addEventListener('click', () => {
   const pct = parseFloat(calibrateInput.value);
   if (!isNaN(pct) && pct > 0) {
