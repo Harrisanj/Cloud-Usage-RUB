@@ -144,6 +144,22 @@ function saveWeeklyReset(ts) {
   fs.writeFileSync(RESET_STATE_PATH, JSON.stringify({ ts }), 'utf8');
 }
 
+// ── Session reset state ────────────────────────────────────────────────────
+const SESSION_RESET_STATE_PATH = path.join(app.getPath('userData'), 'session-reset.json');
+
+function loadSessionReset() {
+  try {
+    const data = JSON.parse(fs.readFileSync(SESSION_RESET_STATE_PATH, 'utf8'));
+    return data.ts || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveSessionReset(ts) {
+  fs.writeFileSync(SESSION_RESET_STATE_PATH, JSON.stringify({ ts }), 'utf8');
+}
+
 function getWeeklyStart() {
   const saved = loadWeeklyReset();
   if (saved) {
@@ -194,8 +210,14 @@ function getSession5h(entries) {
 
   // Claude aligns session expiry to the UTC hour boundary of the first request.
   // e.g. first request at 17:04 UTC → session expires at 17:00 UTC + 5h = 22:00 UTC.
-  const sessionHourTs = sessionStart - (sessionStart % (60 * 60 * 1000));
-  const sessionExpiry = sessionHourTs + SESSION_DUR;
+  let sessionHourTs = sessionStart - (sessionStart % (60 * 60 * 1000));
+  let sessionExpiry = sessionHourTs + SESSION_DUR;
+
+  const manualStart = loadSessionReset();
+  if (manualStart && manualStart + SESSION_DUR > now) {
+    sessionStart = manualStart;
+    sessionExpiry = manualStart + SESSION_DUR;
+  }
 
   if (sessionExpiry <= now) {
     return { cost: 0, opus: 0, sonnet: 0, haiku: 0, resetInMs: 0, projects: [] };
@@ -443,6 +465,16 @@ ipcMain.on('hide-window', () => {
 
 ipcMain.on('toggle-ghost-mode', () => {
   toggleGhostMode();
+});
+
+ipcMain.on('mark-session-reset', (_e, tsArg) => {
+  // User provides the END of the session. We store the START.
+  const SESSION_DUR = 5 * 60 * 60 * 1000;
+  const endTs = (typeof tsArg === 'number' && tsArg > 0) ? tsArg : Date.now();
+  saveSessionReset(endTs - SESSION_DUR);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
+  }
 });
 
 ipcMain.on('mark-weekly-reset', (_e, tsArg) => {

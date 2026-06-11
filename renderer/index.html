@@ -30,7 +30,11 @@
 
     <!-- 5h Session Window -->
     <div class="section section-clickable" id="section5h" title="Кликни чтобы увидеть разбивку по проектам">
-      <div class="section-label"><span>5h Session</span><span class="caret-hint">▾</span></div>
+      <div class="section-label">
+        <span>5h Session</span>
+        <button class="mark-reset-btn" id="markSessionBtn" title="Синхронизировать время сессии">↺</button>
+        <span class="caret-hint">▾</span>
+      </div>
       <div class="progress-wrap">
         <div class="progress-bar" id="bar5h"></div>
       </div>
@@ -125,7 +129,7 @@
   <!-- Reset picker modal -->
   <div id="resetModal" class="modal-overlay" hidden>
     <div class="modal">
-      <div class="modal-title">Когда произошёл последний сброс?</div>
+      <div class="modal-title" id="resetModalTitle">Когда произошёл последний сброс?</div>
       <input type="datetime-local" id="resetInput" class="dt-input" />
       <div class="modal-btns">
         <button id="modalCancel" class="modal-btn modal-btn-cancel">Отмена</button>

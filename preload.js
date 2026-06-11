@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('api', {
   markWeeklyReset(ts) {
     ipcRenderer.send('mark-weekly-reset', ts);
   },
+  markSessionReset(ts) {
+    ipcRenderer.send('mark-session-reset', ts);
+  },
   setTariff(name) {
     ipcRenderer.send('set-tariff', name);
   },

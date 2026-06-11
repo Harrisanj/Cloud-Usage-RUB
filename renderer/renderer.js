@@ -421,13 +421,31 @@ function toDatetimeLocal(date) {
          `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+let currentModalMode = 'weekly';
+
 const modal      = document.getElementById('resetModal');
 const resetInput = document.getElementById('resetInput');
+const modalTitle = document.getElementById('resetModalTitle');
 
 document.getElementById('markResetBtn').addEventListener('click', () => {
+  currentModalMode = 'weekly';
+  if (modalTitle) modalTitle.textContent = 'Когда начался отсчет недели?';
   resetInput.value = toDatetimeLocal(lastResetDate());
   modal.hidden = false;
 });
+
+const markSessionBtn = document.getElementById('markSessionBtn');
+if (markSessionBtn) {
+  markSessionBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // prevent popover
+    currentModalMode = 'session';
+    if (modalTitle) modalTitle.textContent = 'Когда закончится 5-часовая сессия?';
+    const defaultTime = new Date();
+    defaultTime.setHours(defaultTime.getHours() + 5);
+    resetInput.value = toDatetimeLocal(defaultTime);
+    modal.hidden = false;
+  });
+}
 
 document.getElementById('modalCancel').addEventListener('click', () => {
   modal.hidden = true;
@@ -435,7 +453,13 @@ document.getElementById('modalCancel').addEventListener('click', () => {
 
 document.getElementById('modalOk').addEventListener('click', () => {
   const ts = new Date(resetInput.value).getTime();
-  if (!isNaN(ts)) window.api.markWeeklyReset(ts);
+  if (!isNaN(ts)) {
+    if (currentModalMode === 'weekly') {
+      window.api.markWeeklyReset(ts);
+    } else {
+      window.api.markSessionReset(ts);
+    }
+  }
   modal.hidden = true;
 });
 
