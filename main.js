@@ -468,6 +468,7 @@ async function buildPayload() {
       cost:          weekly.cost,
       resetInMs:     weekly.resetInMs,
       weekStart:     weekly.weekStart,
+      projects:      weekly.projects || [],
       serverPct:     sl?.seven_day_pct  ?? null,
       serverResetAt: sl?.resets_at_7d   ?? null,
     },
