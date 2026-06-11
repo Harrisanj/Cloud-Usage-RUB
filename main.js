@@ -260,11 +260,14 @@ function getWeekly(entries) {
   const since = getWeeklyStart();
   const sub = entries.filter(e => e.ts >= since);
 
-  const result = { cost: 0, sonnetCost: 0, resetInMs: 0, projects: [] };
+  const result = { cost: 0, opus: 0, sonnet: 0, haiku: 0, sonnetCost: 0, resetInMs: 0, projects: [] };
   const projectCosts = new Map();
   for (const e of sub) {
     const c = entryCost(e);
     result.cost += c;
+    if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku') {
+      result[e.model] += c;
+    }
     if (e.model === 'sonnet') result.sonnetCost += c;
     const proj = e.project || 'unknown';
     projectCosts.set(proj, (projectCosts.get(proj) || 0) + c);
@@ -466,6 +469,9 @@ async function buildPayload() {
     },
     weeklyAll: {
       cost:          weekly.cost,
+      opus:          weekly.opus,
+      sonnet:        weekly.sonnet,
+      haiku:         weekly.haiku,
       resetInMs:     weekly.resetInMs,
       weekStart:     weekly.weekStart,
       projects:      weekly.projects || [],

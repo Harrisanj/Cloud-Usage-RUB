@@ -359,11 +359,22 @@ function update(d) {
   const pctW = d.weeklyAll.serverPct !== null
     ? d.weeklyAll.serverPct
     : (lim.weeklyAll > 0 ? (d.weeklyAll.cost / lim.weeklyAll) * 100 : 0);
-  setBar('barWeekly', pctW, COLORS.opus); // Default or maybe no special color needed here? Let's just use default or ''
-  // Actually, let's leave barWeekly to its default by omitting the third arg, or pass null.
-  setBar('barWeekly', pctW);
+    
+  let domW = '';
+  if (d.weeklyAll.opus >= d.weeklyAll.sonnet && d.weeklyAll.opus >= d.weeklyAll.haiku) domW = COLORS.opus;
+  else if (d.weeklyAll.sonnet >= d.weeklyAll.opus && d.weeklyAll.sonnet >= d.weeklyAll.haiku) domW = COLORS.sonnet;
+  else if (d.weeklyAll.haiku >= d.weeklyAll.opus && d.weeklyAll.haiku >= d.weeklyAll.sonnet) domW = COLORS.haiku;
+
+  setBar('barWeekly', pctW, domW);
   document.getElementById('pctWeekly').textContent = pctW.toFixed(1) + '%';
   lastWeeklyPct = pctW;
+  
+  const totalCostW = d.weeklyAll.cost || 0.001;
+  document.getElementById('modelRowWeekly').innerHTML =
+    `<span class="m-opus">Opus ${(d.weeklyAll.opus/totalCostW*100).toFixed(0)}%</span>` +
+    `<span class="m-sonnet">Sonnet ${(d.weeklyAll.sonnet/totalCostW*100).toFixed(0)}%</span>` +
+    `<span class="m-haiku">Haiku ${(d.weeklyAll.haiku/totalCostW*100).toFixed(0)}%</span>`;
+
   lastWeeklyProjects = d.weeklyAll.projects || [];
   if (!document.getElementById('weeklyPopover').hidden) renderWeeklyPopover();
 
