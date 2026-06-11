@@ -101,6 +101,7 @@ function getLimits() {
   if (cfg.customLimit5h) {
     limits.session5h = cfg.customLimit5h;
   }
+  if (cfg.customLimitWeekly) {
     limits.weeklyAll = cfg.customLimitWeekly;
   }
   limits.calibHist5h = cfg.calibHist5h || [];
