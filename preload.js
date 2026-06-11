@@ -21,9 +21,6 @@ contextBridge.exposeInMainWorld('api', {
   setCurrency(name) {
     ipcRenderer.send('set-currency', name);
   },
-  setFableMode(enabled) {
-    ipcRenderer.send('set-fable-mode', enabled);
-  },
   toggleGhostMode() {
     ipcRenderer.send('toggle-ghost-mode');
   },

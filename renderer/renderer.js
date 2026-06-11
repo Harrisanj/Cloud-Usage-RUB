@@ -328,19 +328,15 @@ function update(d) {
   const lbl24h = document.getElementById('lbl24h');
   if (lbl24h) lbl24h.textContent = `Last 24 Hours · ${d.currency === 'RUB' ? '₽' : '$'}/h`;
 
-  const fableSelect = document.getElementById('fableSelect');
-  if (fableSelect && d.limits && d.limits.includeFable5 !== undefined) {
-    const val = d.limits.includeFable5 ? 'true' : 'false';
-    if (fableSelect.value !== val) {
-      fableSelect.value = val;
-    }
-    const fableSpan = document.getElementById('lblFable5h');
-    const fableLeg = document.getElementById('legFable');
-    if (fableSpan) fableSpan.hidden = !d.limits.includeFable5;
-    if (fableLeg) fableLeg.hidden = !d.limits.includeFable5;
-    if (chart7) {
-      chart7.data.datasets[3].hidden = !d.limits.includeFable5;
-    }
+  const hasFable5h = (d.session5h.fable || 0) > 0;
+  const hasFable7d = d.last7Days && d.last7Days.some(x => (x.fable || 0) > 0);
+  
+  const fableSpan = document.getElementById('lblFable5h');
+  const fableLeg = document.getElementById('legFable');
+  if (fableSpan) fableSpan.hidden = !hasFable5h;
+  if (fableLeg) fableLeg.hidden = !hasFable7d;
+  if (chart7) {
+    chart7.data.datasets[3].hidden = !hasFable7d;
   }
 
   // 5h session — prefer server-reported % from statusline, fall back to calculated
@@ -622,12 +618,6 @@ document.getElementById('themeBtn').addEventListener('click', () => {
   applyTheme(isDark);
 });
 
-const fableSelect = document.getElementById('fableSelect');
-if (fableSelect) {
-  fableSelect.addEventListener('change', (e) => {
-    if (window.api.setFableMode) window.api.setFableMode(e.target.value === 'true');
-  });
-}
 
 const ghostBtn = document.getElementById('ghostBtn');
 if (ghostBtn) {

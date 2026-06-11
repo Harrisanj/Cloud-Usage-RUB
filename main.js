@@ -83,11 +83,10 @@ function loadConfig() {
       customLimit5h: data.customLimit5h || null,
       customLimitWeekly: data.customLimitWeekly || null,
       calibHist5h: data.calibHist5h || [],
-      calibHistWeekly: data.calibHistWeekly || [],
-      includeFable5: !!data.includeFable5
+      calibHistWeekly: data.calibHistWeekly || []
     };
   } catch (_) {}
-  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null, calibHist5h: [], calibHistWeekly: [], includeFable5: false };
+  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null, calibHist5h: [], calibHistWeekly: [] };
 }
 
 function saveConfig(cfg) {
@@ -107,7 +106,6 @@ function getLimits() {
   }
   limits.calibHist5h = (cfg.calibHist5h || []).filter(x => typeof x === 'object');
   limits.calibHistWeekly = (cfg.calibHistWeekly || []).filter(x => typeof x === 'object');
-  limits.includeFable5 = cfg.includeFable5;
   return limits;
 }
 
@@ -454,9 +452,7 @@ function toggleWindow() {
 }
 
 async function buildPayload() {
-  let entries = await loadAllEntries();
-  const cfg = loadConfig();
-  if (!cfg.includeFable5) entries = entries.filter(e => e.model !== 'fable');
+  const entries = await loadAllEntries();
   const now = Date.now();
 
   const session = getSession5h(entries);
@@ -551,19 +547,9 @@ ipcMain.on('set-currency', (_e, cur) => {
   }
 });
 
-ipcMain.on('set-fable-mode', (_e, en) => {
-  const cfg = loadConfig();
-  cfg.includeFable5 = !!en;
-  saveConfig(cfg);
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
-  }
-});
-
 ipcMain.on('calibrate', async (_e, mode, pct) => {
   const cfg = loadConfig();
   let entries = await loadAllEntries();
-  if (!cfg.includeFable5) entries = entries.filter(e => e.model !== 'fable');
 
   if (pct === null) {
     if (mode === '5h') {
