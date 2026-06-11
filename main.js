@@ -101,9 +101,10 @@ function getLimits() {
   if (cfg.customLimit5h) {
     limits.session5h = cfg.customLimit5h;
   }
-  if (cfg.customLimitWeekly) {
     limits.weeklyAll = cfg.customLimitWeekly;
   }
+  limits.calibHist5h = cfg.calibHist5h || [];
+  limits.calibHistWeekly = cfg.calibHistWeekly || [];
   return limits;
 }
 
@@ -559,21 +560,50 @@ ipcMain.on('calibrate', async (_e, mode, pct) => {
       const session = getSession5h(entries);
       if (session.cost > 0) {
         const newLim = session.cost / (pct / 100);
-        cfg.calibHist5h.push(newLim);
+        cfg.calibHist5h = (cfg.calibHist5h || []).filter(x => typeof x === 'object');
+        cfg.calibHist5h.push({ limit: newLim, pct: pct, ts: Date.now() });
         if (cfg.calibHist5h.length > 5) cfg.calibHist5h.shift();
-        cfg.customLimit5h = cfg.calibHist5h.reduce((a,b)=>a+b, 0) / cfg.calibHist5h.length;
+        cfg.customLimit5h = cfg.calibHist5h.reduce((a,b)=>a+b.limit, 0) / cfg.calibHist5h.length;
       }
     } else if (mode === 'weekly') {
       const weekly = getWeekly(entries);
       if (weekly.cost > 0) {
         const newLim = weekly.cost / (pct / 100);
-        cfg.calibHistWeekly.push(newLim);
+        cfg.calibHistWeekly = (cfg.calibHistWeekly || []).filter(x => typeof x === 'object');
+        cfg.calibHistWeekly.push({ limit: newLim, pct: pct, ts: Date.now() });
         if (cfg.calibHistWeekly.length > 5) cfg.calibHistWeekly.shift();
-        cfg.customLimitWeekly = cfg.calibHistWeekly.reduce((a,b)=>a+b, 0) / cfg.calibHistWeekly.length;
+        cfg.customLimitWeekly = cfg.calibHistWeekly.reduce((a,b)=>a+b.limit, 0) / cfg.calibHistWeekly.length;
       }
     }
   }
 
+  saveConfig(cfg);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
+  }
+});
+
+ipcMain.on('delete-calibration', (_e, mode, index) => {
+  const cfg = loadConfig();
+  if (mode === '5h') {
+    if (cfg.calibHist5h && cfg.calibHist5h.length > index) {
+      cfg.calibHist5h.splice(index, 1);
+      if (cfg.calibHist5h.length === 0) {
+        cfg.customLimit5h = null;
+      } else {
+        cfg.customLimit5h = cfg.calibHist5h.reduce((a,b)=>a+b.limit, 0) / cfg.calibHist5h.length;
+      }
+    }
+  } else if (mode === 'weekly') {
+    if (cfg.calibHistWeekly && cfg.calibHistWeekly.length > index) {
+      cfg.calibHistWeekly.splice(index, 1);
+      if (cfg.calibHistWeekly.length === 0) {
+        cfg.customLimitWeekly = null;
+      } else {
+        cfg.customLimitWeekly = cfg.calibHistWeekly.reduce((a,b)=>a+b.limit, 0) / cfg.calibHistWeekly.length;
+      }
+    }
+  }
   saveConfig(cfg);
   if (mainWindow && !mainWindow.isDestroyed()) {
     buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});

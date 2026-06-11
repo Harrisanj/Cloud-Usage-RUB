@@ -51,9 +51,13 @@ function updateChartTheme(dark) {
 }
 
 // ── Formatting ─────────────────────────────────────────────────────────
-
+let currentCurrency = 'USD';
 let globalCurrency = 'USD';
 let globalRate = 100;
+let lastLimits = null;
+
+let chart7 = null;
+let chart24h = null;
 
 function fmtCost(usd) {
   let val = usd;
@@ -294,6 +298,7 @@ function projectDisplayName(folderName) {
 
 function update(d) {
   lastUpdatedAt = d.updatedAt;
+  lastLimits = d.limits;
   const lim = d.limits;
   globalCurrency = d.currency;
   globalRate = d.exchangeRate || 100;
@@ -527,6 +532,46 @@ document.getElementById('calSaveBtn').addEventListener('click', () => {
   }
   calibrateModal.hidden = true;
 });
+
+const calHistModal = document.getElementById('calHistModal');
+const calHistList = document.getElementById('calHistList');
+
+document.getElementById('calHistBtn').addEventListener('click', () => {
+  const hist = currentCalibrateMode === 'weekly' 
+    ? (lastLimits?.calibHistWeekly || []) 
+    : (lastLimits?.calibHist5h || []);
+  
+  document.getElementById('calHistTitle').textContent = `История (${currentCalibrateMode})`;
+  
+  if (hist.length === 0) {
+    calHistList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 10px;">Нет данных</div>';
+  } else {
+    calHistList.innerHTML = hist.map((item, index) => {
+      const date = new Date(item.ts);
+      const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--border);">
+          <div>
+            <span style="color: var(--text);">${item.pct}%</span>
+            <span style="color: var(--text-dim); margin-left: 8px; font-size: 10px;">${timeStr}</span>
+          </div>
+          <button class="icon-btn" onclick="deleteHistoryItem(${index})" style="font-size: 10px; color: var(--crit);">✖</button>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  calHistModal.hidden = false;
+});
+
+document.getElementById('calHistCloseBtn').addEventListener('click', () => {
+  calHistModal.hidden = true;
+});
+
+window.deleteHistoryItem = function(index) {
+  window.api.deleteCalibration(currentCalibrateMode, index);
+  calHistModal.hidden = true;
+};
 
 document.getElementById('modalOk').addEventListener('click', () => {
   let ts;
