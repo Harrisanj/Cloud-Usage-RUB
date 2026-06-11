@@ -2,7 +2,9 @@
 
 [🇷🇺 Русский](#claude-usage-overlay-русский)
 
-![Claude Usage Widget](screenshot.png)
+![Claude Usage Widget](1Screenshot_1.png)
+![Calibration History](2Screenshot_1.png)
+![Projects](3Screenshot_1.png)
 
 Always-on-top Electron widget for monitoring Claude Code token usage on the **Max 5×** plan.
 
@@ -14,7 +16,9 @@ Always-on-top Electron widget for monitoring Claude Code token usage on the **Ma
 - Last 24-hour token usage bar chart
 - USD and RUB cost estimates
 - **Project breakdowns**: Click on the 5-hour session, weekly summary, or any day in the 7-day chart to see usage per project.
-- **Calibrate 5-hour %**: Match your widget progress bar accurately to the official claude.ai web UI.
+- **Calibrate %**: Accurately match both 5-hour and Weekly limits with the official claude.ai UI. Averages your last 5 inputs for precise tracking.
+- **Calibration History**: View, track, and manage your past calibration entries in a dedicated modal.
+- **Weekly Progress**: Visual breakdown of weekly usage (thick green bar for token %, thin blue bar for elapsed time %).
 - **Dynamic colors**: Progress bars automatically adapt to the dominant model used (Opus/Sonnet/Haiku).
 - **Tariffs switcher**: Quick dropdown to switch between Max 5x, Max 20x, and Pro limits.
 - Transparent frameless window, always on top, skip taskbar
@@ -71,7 +75,9 @@ npm start             # launch the overlay
 - График затрат за последние 24 часа
 - Оценка стоимости в долларах (USD) и рублях (RUB)
 - **Разбивка по проектам**: Кликните на 5-часовую сессию, неделю или на любой столбец в 7-дневном графике, чтобы посмотреть траты по проектам.
-- **Калибровка 5h %**: Введите текущий процент с официального сайта claude.ai, чтобы виджет идеально с ним синхронизировался.
+- **Калибровка %**: Синхронизация 5-часовой сессии и недельного лимита с официальным сайтом. Автоматически высчитывает среднее из последних 5 вводов для максимальной точности.
+- **История калибровок**: Удобное окно для просмотра и удаления прошлых вводов процентов.
+- **Индикаторы недели**: Наглядная статистика: толстая зеленая полоса показывает расход лимита (%), тонкая синяя — сколько времени прошло от начала недели.
 - **Динамический цвет**: Полоска прогресса сессии автоматически принимает цвет той модели, на которую ушло больше всего денег (Opus/Sonnet/Haiku).
 - **Выбор тарифа**: Удобный встроенный переключатель между тарифами (Max 5x, Max 20x, Pro).
 - Режим "Ghost Mode": полупрозрачность и пропускание кликов мыши насквозь (не мешает работе)
