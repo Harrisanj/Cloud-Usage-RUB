@@ -444,6 +444,22 @@ document.getElementById('themeBtn').addEventListener('click', () => {
   applyTheme(isDark);
 });
 
+const ghostBtn = document.getElementById('ghostBtn');
+if (ghostBtn) {
+  ghostBtn.addEventListener('click', () => {
+    if (window.api.toggleGhostMode) window.api.toggleGhostMode();
+  });
+}
+if (window.api.onGhostModeChanged) {
+  window.api.onGhostModeChanged((isGhost) => {
+    if (isGhost) {
+      document.body.classList.add('ghost-mode');
+    } else {
+      document.body.classList.remove('ghost-mode');
+    }
+  });
+}
+
 // ── 5h projects popover ────────────────────────────────────────────────
 
 function escapeHtml(s) {

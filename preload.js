@@ -18,4 +18,10 @@ contextBridge.exposeInMainWorld('api', {
   setCurrency(name) {
     ipcRenderer.send('set-currency', name);
   },
+  toggleGhostMode() {
+    ipcRenderer.send('toggle-ghost-mode');
+  },
+  onGhostModeChanged(callback) {
+    ipcRenderer.on('ghost-mode-changed', (_event, isGhost) => callback(isGhost));
+  },
 });

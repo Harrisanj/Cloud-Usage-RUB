@@ -368,6 +368,7 @@ function createTray() {
 
   const menu = Menu.buildFromTemplate([
     { label: 'Show / Hide', click: () => toggleWindow() },
+    { label: 'Ghost Mode (Click-through)', click: () => toggleGhostMode() },
     { label: 'Reload data', click: () => mainWindow && mainWindow.reload() },
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() },
@@ -375,6 +376,20 @@ function createTray() {
 
   tray.setContextMenu(menu);
   tray.on('click', () => toggleWindow());
+}
+
+let isGhostMode = false;
+function toggleGhostMode() {
+  if (!mainWindow) return;
+  isGhostMode = !isGhostMode;
+  if (isGhostMode) {
+    mainWindow.setOpacity(0.3);
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  } else {
+    mainWindow.setOpacity(1.0);
+    mainWindow.setIgnoreMouseEvents(false);
+  }
+  mainWindow.webContents.send('ghost-mode-changed', isGhostMode);
 }
 
 function toggleWindow() {
@@ -426,6 +441,10 @@ async function buildPayload() {
 
 ipcMain.on('hide-window', () => {
   if (mainWindow) mainWindow.hide();
+});
+
+ipcMain.on('toggle-ghost-mode', () => {
+  toggleGhostMode();
 });
 
 ipcMain.on('mark-weekly-reset', (_e, tsArg) => {
@@ -488,6 +507,7 @@ if (!gotLock) {
     createWindow();
     createTray();
     globalShortcut.register('CommandOrControl+Shift+U', toggleWindow);
+    globalShortcut.register('Alt+Shift+U', toggleGhostMode);
     mainWindow.webContents.on('did-finish-load', () => startUpdates());
   });
 }
