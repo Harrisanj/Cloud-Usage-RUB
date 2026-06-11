@@ -104,8 +104,8 @@ function getLimits() {
   if (cfg.customLimitWeekly) {
     limits.weeklyAll = cfg.customLimitWeekly;
   }
-  limits.calibHist5h = cfg.calibHist5h || [];
-  limits.calibHistWeekly = cfg.calibHistWeekly || [];
+  limits.calibHist5h = (cfg.calibHist5h || []).filter(x => typeof x === 'object');
+  limits.calibHistWeekly = (cfg.calibHistWeekly || []).filter(x => typeof x === 'object');
   return limits;
 }
 
