@@ -22,6 +22,9 @@
       <div class="header-right">
         <select class="plan-badge plan-select" id="tariffSelect" title="Выберите тариф"></select>
         <select class="plan-badge plan-select" id="currencySelect" title="Выберите валюту"></select>
+        <label class="plan-badge plan-select" style="display:flex;align-items:center;gap:3px;cursor:pointer;padding-right:6px" title="Включить Fable 5">
+          <input type="checkbox" id="fableCheckbox" style="margin:0">Fable
+        </label>
         <button class="icon-btn" id="ghostBtn" title="Ghost Mode (Ctrl+Alt+U)">👻</button>
         <button class="icon-btn" id="themeBtn" title="Toggle theme">◑</button>
         <button class="icon-btn close-btn" id="closeBtn" title="Hide">×</button>
@@ -49,6 +52,7 @@
         <span class="m-opus">Opus —%</span>
         <span class="m-sonnet">Sonnet —%</span>
         <span class="m-haiku">Haiku —%</span>
+        <span class="m-fable" id="lblFable5h" hidden>Fable —%</span>
       </div>
     </div>
 
@@ -100,6 +104,7 @@
         <span class="leg-item m-opus">■ Opus</span>
         <span class="leg-item m-sonnet">■ Sonnet</span>
         <span class="leg-item m-haiku">■ Haiku</span>
+        <span class="leg-item m-fable" id="legFable" hidden>■ Fable</span>
       </div>
     </div>
 

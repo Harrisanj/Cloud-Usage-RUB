@@ -25,6 +25,7 @@ function normalizeModel(modelStr) {
   if (m.includes('opus'))   return 'opus';
   if (m.includes('sonnet')) return 'sonnet';
   if (m.includes('haiku'))  return 'haiku';
+  if (m.includes('fable'))  return 'fable';
   return 'unknown';
 }
 

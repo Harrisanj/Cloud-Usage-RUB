@@ -83,10 +83,11 @@ function loadConfig() {
       customLimit5h: data.customLimit5h || null,
       customLimitWeekly: data.customLimitWeekly || null,
       calibHist5h: data.calibHist5h || [],
-      calibHistWeekly: data.calibHistWeekly || []
+      calibHistWeekly: data.calibHistWeekly || [],
+      includeFable5: !!data.includeFable5
     };
   } catch (_) {}
-  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null, calibHist5h: [], calibHistWeekly: [] };
+  return { tariff: 'Max 5×', currency: 'USD', customLimit5h: null, customLimitWeekly: null, calibHist5h: [], calibHistWeekly: [], includeFable5: false };
 }
 
 function saveConfig(cfg) {
@@ -106,6 +107,7 @@ function getLimits() {
   }
   limits.calibHist5h = (cfg.calibHist5h || []).filter(x => typeof x === 'object');
   limits.calibHistWeekly = (cfg.calibHistWeekly || []).filter(x => typeof x === 'object');
+  limits.includeFable5 = cfg.includeFable5;
   return limits;
 }
 
@@ -131,6 +133,7 @@ function updateExchangeRate() {
 }
 
 const PRICING = {
+  fable:  { input: 10,   output: 50,   cacheRead: 1.00, cacheCreate: 12.50 },
   opus:   { input: 5,    output: 25,   cacheRead: 0.50, cacheCreate: 6.25 },
   sonnet: { input: 3,    output: 15,   cacheRead: 0.30, cacheCreate: 3.75 },
   haiku:  { input: 1,    output: 5,    cacheRead: 0.10, cacheCreate: 1.25 },
@@ -237,13 +240,13 @@ function getSession5h(entries) {
     return { cost: 0, opus: 0, sonnet: 0, haiku: 0, resetInMs: 0, projects: [] };
   }
 
-  const result = { cost: 0, opus: 0, sonnet: 0, haiku: 0, resetInMs: 0 };
+  const result = { cost: 0, opus: 0, sonnet: 0, haiku: 0, fable: 0, resetInMs: 0 };
   const projectCosts = new Map();
   for (let i = entries.length - 1; i >= 0; i--) {
     if (entries[i].ts < sessionStart) break;
     const c = entryCost(entries[i]);
     result.cost += c;
-    if (entries[i].model === 'opus' || entries[i].model === 'sonnet' || entries[i].model === 'haiku') {
+    if (entries[i].model === 'opus' || entries[i].model === 'sonnet' || entries[i].model === 'haiku' || entries[i].model === 'fable') {
       result[entries[i].model] += c;
     }
     const proj = entries[i].project || 'unknown';
@@ -262,12 +265,12 @@ function getWeekly(entries) {
   const since = getWeeklyStart();
   const sub = entries.filter(e => e.ts >= since);
 
-  const result = { cost: 0, opus: 0, sonnet: 0, haiku: 0, sonnetCost: 0, resetInMs: 0, projects: [] };
+  const result = { cost: 0, opus: 0, sonnet: 0, haiku: 0, fable: 0, sonnetCost: 0, resetInMs: 0, projects: [] };
   const projectCosts = new Map();
   for (const e of sub) {
     const c = entryCost(e);
     result.cost += c;
-    if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku') {
+    if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku' || e.model === 'fable') {
       result[e.model] += c;
     }
     if (e.model === 'sonnet') result.sonnetCost += c;
@@ -311,7 +314,7 @@ function getLast7Days(entries) {
       day: dayNames[d.getDay()],
       start: d.getTime(),
       end: dayEnd.getTime(),
-      opus: 0, sonnet: 0, haiku: 0,
+      opus: 0, sonnet: 0, haiku: 0, fable: 0,
       projectCosts: new Map(),
     });
   }
@@ -320,7 +323,7 @@ function getLast7Days(entries) {
     for (const bucket of days) {
       if (e.ts >= bucket.start && e.ts < bucket.end) {
         const c = entryCost(e);
-        if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku') {
+        if (e.model === 'opus' || e.model === 'sonnet' || e.model === 'haiku' || e.model === 'fable') {
           bucket[e.model] += c;
         }
         const proj = e.project || 'unknown';
@@ -334,7 +337,7 @@ function getLast7Days(entries) {
     const projects = [...d.projectCosts.entries()]
       .map(([name, cost]) => ({ name, cost }))
       .sort((a, b) => b.cost - a.cost);
-    return { day: d.day, opus: d.opus, sonnet: d.sonnet, haiku: d.haiku, projects };
+    return { day: d.day, opus: d.opus, sonnet: d.sonnet, haiku: d.haiku, fable: d.fable, projects };
   });
 }
 
@@ -451,7 +454,9 @@ function toggleWindow() {
 }
 
 async function buildPayload() {
-  const entries = await loadAllEntries();
+  let entries = await loadAllEntries();
+  const cfg = loadConfig();
+  if (!cfg.includeFable5) entries = entries.filter(e => e.model !== 'fable');
   const now = Date.now();
 
   const session = getSession5h(entries);
@@ -464,6 +469,7 @@ async function buildPayload() {
       opus:          session.opus,
       sonnet:        session.sonnet,
       haiku:         session.haiku,
+      fable:         session.fable,
       resetInMs:     session.resetInMs,
       projects:      session.projects || [],
       serverPct:     sl?.five_hour_pct  ?? null,
@@ -474,6 +480,7 @@ async function buildPayload() {
       opus:          weekly.opus,
       sonnet:        weekly.sonnet,
       haiku:         weekly.haiku,
+      fable:         weekly.fable,
       resetInMs:     weekly.resetInMs,
       weekStart:     weekly.weekStart,
       projects:      weekly.projects || [],
@@ -544,9 +551,19 @@ ipcMain.on('set-currency', (_e, cur) => {
   }
 });
 
-ipcMain.on('calibrate', async (_e, mode, pct) => {
-  const entries = await loadAllEntries();
+ipcMain.on('set-fable-mode', (_e, en) => {
   const cfg = loadConfig();
+  cfg.includeFable5 = !!en;
+  saveConfig(cfg);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    buildPayload().then(p => mainWindow.webContents.send('usage-update', p)).catch(() => {});
+  }
+});
+
+ipcMain.on('calibrate', async (_e, mode, pct) => {
+  const cfg = loadConfig();
+  let entries = await loadAllEntries();
+  if (!cfg.includeFable5) entries = entries.filter(e => e.model !== 'fable');
 
   if (pct === null) {
     if (mode === '5h') {

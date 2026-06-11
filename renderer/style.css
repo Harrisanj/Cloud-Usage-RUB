@@ -12,6 +12,7 @@
   --accent-opus:  #d97757;
   --accent-sonnet:#6aa9c9;
   --accent-haiku: #9ab87a;
+  --accent-fable: #c288d6;
   --ok:           #6a9f7f;
   --warn:         #d9a05b;
   --crit:         #c85a5a;
@@ -31,6 +32,7 @@
   --accent-opus:  #c05a30;
   --accent-sonnet:#2e7fab;
   --accent-haiku: #4a7e30;
+  --accent-fable: #8a48a0;
   --ok:           #3a7a58;
   --warn:         #b07020;
   --crit:         #a03030;
@@ -251,6 +253,7 @@ html, body {
 .m-opus   { color: var(--accent-opus); }
 .m-sonnet { color: var(--accent-sonnet); }
 .m-haiku  { color: var(--accent-haiku); }
+.m-fable  { color: var(--accent-fable); }
 
 /* ── Charts ───────────────────────────────────────────────────────────── */
 .chart-wrap     { height: 108px; position: relative; margin-bottom: 3px; }

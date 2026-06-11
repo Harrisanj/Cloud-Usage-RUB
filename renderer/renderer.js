@@ -137,7 +137,7 @@ function setBar(id, pct, color = null) {
 
 // ── Chart.js init ──────────────────────────────────────────────────────
 
-const COLORS = { opus: '#d97757', sonnet: '#6aa9c9', haiku: '#9ab87a' };
+const COLORS = { opus: '#d97757', sonnet: '#6aa9c9', haiku: '#9ab87a', fable: '#c288d6' };
 
 function makeTooltip() {
   return {
@@ -173,6 +173,7 @@ chart7 = new Chart(ctx7, {
       { label: 'Opus',   data: new Array(7).fill(0), backgroundColor: COLORS.opus,   stack: 'u' },
       { label: 'Sonnet', data: new Array(7).fill(0), backgroundColor: COLORS.sonnet, stack: 'u' },
       { label: 'Haiku',  data: new Array(7).fill(0), backgroundColor: COLORS.haiku,  stack: 'u' },
+      { label: 'Fable',  data: new Array(7).fill(0), backgroundColor: COLORS.fable,  stack: 'u' },
     ],
   },
   options: {
@@ -205,7 +206,7 @@ chart7 = new Chart(ctx7, {
   },
 });
 
-// 24h bar chart
+// 24h chart
 function make24hLabels() {
   const now = new Date();
   return Array.from({ length: 24 }, (_, i) => {
@@ -324,15 +325,30 @@ function update(d) {
   const lbl24h = document.getElementById('lbl24h');
   if (lbl24h) lbl24h.textContent = `Last 24 Hours · ${d.currency === 'RUB' ? '₽' : '$'}/h`;
 
+  const fableBox = document.getElementById('fableCheckbox');
+  if (fableBox && d.limits && d.limits.includeFable5 !== undefined) {
+    if (fableBox.checked !== d.limits.includeFable5) {
+      fableBox.checked = d.limits.includeFable5;
+    }
+    const fableSpan = document.getElementById('lblFable5h');
+    const fableLeg = document.getElementById('legFable');
+    if (fableSpan) fableSpan.hidden = !d.limits.includeFable5;
+    if (fableLeg) fableLeg.hidden = !d.limits.includeFable5;
+    if (chart7) {
+      chart7.data.datasets[3].hidden = !d.limits.includeFable5;
+    }
+  }
+
   // 5h session — prefer server-reported % from statusline, fall back to calculated
   const pct5h = d.session5h.serverPct !== null
     ? d.session5h.serverPct
     : (lim.session5h > 0 ? (d.session5h.cost / lim.session5h) * 100 : 0);
   
   let dom5h = '';
-  if (d.session5h.opus >= d.session5h.sonnet && d.session5h.opus >= d.session5h.haiku) dom5h = COLORS.opus;
-  else if (d.session5h.sonnet >= d.session5h.opus && d.session5h.sonnet >= d.session5h.haiku) dom5h = COLORS.sonnet;
-  else if (d.session5h.haiku >= d.session5h.opus && d.session5h.haiku >= d.session5h.sonnet) dom5h = COLORS.haiku;
+  if (d.session5h.opus >= d.session5h.sonnet && d.session5h.opus >= d.session5h.haiku && d.session5h.opus >= (d.session5h.fable || 0)) dom5h = COLORS.opus;
+  else if (d.session5h.sonnet >= d.session5h.opus && d.session5h.sonnet >= d.session5h.haiku && d.session5h.sonnet >= (d.session5h.fable || 0)) dom5h = COLORS.sonnet;
+  else if (d.session5h.haiku >= d.session5h.opus && d.session5h.haiku >= d.session5h.sonnet && d.session5h.haiku >= (d.session5h.fable || 0)) dom5h = COLORS.haiku;
+  else if ((d.session5h.fable || 0) >= d.session5h.opus && (d.session5h.fable || 0) >= d.session5h.sonnet && (d.session5h.fable || 0) >= d.session5h.haiku) dom5h = COLORS.fable;
   
   setBar('bar5h', pct5h, dom5h);
   document.getElementById('pct5h').textContent = pct5h.toFixed(1) + '%';
@@ -352,10 +368,12 @@ function update(d) {
   if (barTime) barTime.style.width = elapsedPct5h.toFixed(1) + '%';
 
   const totalCost5h = d.session5h.cost || 0.001;
+  const safePct = (v, total) => (v / total * 100).toFixed(0);
   document.getElementById('modelRow5h').innerHTML =
-    `<span class="m-opus">Opus ${(d.session5h.opus/totalCost5h*100).toFixed(0)}%</span>` +
-    `<span class="m-sonnet">Sonnet ${(d.session5h.sonnet/totalCost5h*100).toFixed(0)}%</span>` +
-    `<span class="m-haiku">Haiku ${(d.session5h.haiku/totalCost5h*100).toFixed(0)}%</span>`;
+    `<span class="m-opus">Opus ${safePct(d.session5h.opus, totalCost5h)}%</span>` +
+    `<span class="m-sonnet">Sonnet ${safePct(d.session5h.sonnet, totalCost5h)}%</span>` +
+    `<span class="m-haiku">Haiku ${safePct(d.session5h.haiku, totalCost5h)}%</span>` +
+    `<span class="m-fable">Fable ${safePct(d.session5h.fable || 0, totalCost5h)}%</span>`;
 
   lastSessionProjects = d.session5h.projects || [];
   if (!document.getElementById('sessionPopover').hidden) renderSessionPopover();
@@ -365,7 +383,13 @@ function update(d) {
     ? d.weeklyAll.serverPct
     : (lim.weeklyAll > 0 ? (d.weeklyAll.cost / lim.weeklyAll) * 100 : 0);
     
-  setBar('barWeekly', pctW); // default green
+  let domW = COLORS.sonnet;
+  if (d.weeklyAll.opus >= d.weeklyAll.sonnet && d.weeklyAll.opus >= d.weeklyAll.haiku && d.weeklyAll.opus >= (d.weeklyAll.fable || 0)) domW = COLORS.opus;
+  else if (d.weeklyAll.sonnet >= d.weeklyAll.opus && d.weeklyAll.sonnet >= d.weeklyAll.haiku && d.weeklyAll.sonnet >= (d.weeklyAll.fable || 0)) domW = COLORS.sonnet;
+  else if (d.weeklyAll.haiku >= d.weeklyAll.opus && d.weeklyAll.haiku >= d.weeklyAll.sonnet && d.weeklyAll.haiku >= (d.weeklyAll.fable || 0)) domW = COLORS.haiku;
+  else if ((d.weeklyAll.fable || 0) >= d.weeklyAll.opus && (d.weeklyAll.fable || 0) >= d.weeklyAll.sonnet && (d.weeklyAll.fable || 0) >= d.weeklyAll.haiku) domW = COLORS.fable;
+
+  setBar('barWeekly', pctW, domW);
   document.getElementById('pctWeekly').textContent = pctW.toFixed(1) + '%';
   lastWeeklyPct = pctW;
 
@@ -401,6 +425,7 @@ function update(d) {
   chart7.data.datasets[0].data = d.last7Days.map(x => x.opus);
   chart7.data.datasets[1].data = d.last7Days.map(x => x.sonnet);
   chart7.data.datasets[2].data = d.last7Days.map(x => x.haiku);
+  chart7.data.datasets[3].data = d.last7Days.map(x => x.fable || 0);
   chart7.update('none');
 
   // 24h chart — update labels to current hours
@@ -598,6 +623,13 @@ document.getElementById('themeBtn').addEventListener('click', () => {
   isDark = !isDark;
   applyTheme(isDark);
 });
+
+const fableCheckbox = document.getElementById('fableCheckbox');
+if (fableCheckbox) {
+  fableCheckbox.addEventListener('change', (e) => {
+    if (window.api.setFableMode) window.api.setFableMode(e.target.checked);
+  });
+}
 
 const ghostBtn = document.getElementById('ghostBtn');
 if (ghostBtn) {
